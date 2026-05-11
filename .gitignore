@@ -40,3 +40,9 @@ htmlcov/
 
 # OS
 Thumbs.db
+
+# Project management
+CLAUDE.md
+DECISIONS.md
+PROGRESS.md
+START_PROMPT.md
