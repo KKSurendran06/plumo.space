@@ -17,6 +17,8 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from functools import wraps
+
 from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
@@ -36,6 +38,7 @@ logger = logging.getLogger("plumo")
 
 SESSION_TIMEOUT_MINUTES = 20
 TTS_VOICE_NAME = "en-US-Neural2-D"
+API_SECRET_KEY = os.getenv("API_SECRET_KEY")
 
 
 # ---- App + clients -----------------------------------------------------------
@@ -78,10 +81,28 @@ def tts() -> texttospeech.TextToSpeechClient:
     return _clients["tts"]
 
 
-# ---- Helpers -----------------------------------------------------------------
+# ---- Helpers & Middleware ----------------------------------------------------
 
 def err(message: str, code: str, status: int) -> tuple[Response, int]:
     return jsonify({"error": message, "code": code}), status
+
+
+def require_api_key(f):
+    """Decorator to protect routes with an API key."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not API_SECRET_KEY:
+            # If the key isn't configured on the server, block all requests
+            logger.warning("API_SECRET_KEY is not set. Denying all API requests.")
+            return err("Server not configured", "AUTH_NOT_CONFIGURED", 500)
+
+        sent_key = request.headers.get("x-api-key")
+        if not sent_key or sent_key != API_SECRET_KEY:
+            logger.warning("Invalid or missing API key. Request denied.")
+            return err("Unauthorized", "INVALID_API_KEY", 401)
+
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 def now_utc() -> datetime:
@@ -121,6 +142,7 @@ def health() -> tuple[Response, int]:
 
 
 @app.post("/session/start")
+@require_api_key
 def start_session() -> tuple[Response, int]:
     body = request.get_json(silent=True) or {}
     role = body.get("role")
@@ -150,6 +172,7 @@ def start_session() -> tuple[Response, int]:
 
 
 @app.post("/session/<session_id>/answer")
+@require_api_key
 def submit_answer(session_id: str) -> tuple[Response, int]:
     body = request.get_json(silent=True) or {}
     answer = body.get("answer")
@@ -242,6 +265,7 @@ def submit_answer(session_id: str) -> tuple[Response, int]:
 
 
 @app.get("/session/<session_id>/report")
+@require_api_key
 def get_report(session_id: str) -> tuple[Response, int]:
     ref = session_ref(session_id)
     snap = ref.get()
@@ -268,6 +292,7 @@ def get_report(session_id: str) -> tuple[Response, int]:
 
 
 @app.post("/transcribe")
+@require_api_key
 def transcribe() -> tuple[Response, int]:
     audio_file = request.files.get("audio")
     if audio_file is None:
@@ -299,6 +324,7 @@ def transcribe() -> tuple[Response, int]:
 
 
 @app.post("/speak")
+@require_api_key
 def speak() -> tuple[Response, int] | Response:
     body = request.get_json(silent=True) or {}
     text = body.get("text")

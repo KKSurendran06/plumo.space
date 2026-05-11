@@ -9,6 +9,22 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
   "http://localhost:8000";
 
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
+
+async function fetchWithKey(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(options.headers);
+  if (API_KEY) {
+    headers.set("x-api-key", API_KEY);
+  }
+
+  // If body is FormData, don't set Content-Type, let the browser do it
+  if (!(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  return fetch(url, { ...options, headers });
+}
+
 async function parseJsonOrThrow<T>(res: Response): Promise<T> {
   const text = await res.text();
   let data: unknown;
@@ -43,9 +59,8 @@ export class ApiClientError extends Error {
 }
 
 export async function startSession(role: string): Promise<StartSessionResponse> {
-  const res = await fetch(`${API_URL}/session/start`, {
+  const res = await fetchWithKey(`${API_URL}/session/start`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ role }),
   });
   return parseJsonOrThrow<StartSessionResponse>(res);
@@ -55,23 +70,22 @@ export async function submitAnswer(
   sessionId: string,
   answer: string,
 ): Promise<AnswerResponse> {
-  const res = await fetch(`${API_URL}/session/${sessionId}/answer`, {
+  const res = await fetchWithKey(`${API_URL}/session/${sessionId}/answer`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ answer }),
   });
   return parseJsonOrThrow<AnswerResponse>(res);
 }
 
 export async function getReport(sessionId: string): Promise<ReportResponse> {
-  const res = await fetch(`${API_URL}/session/${sessionId}/report`);
+  const res = await fetchWithKey(`${API_URL}/session/${sessionId}/report`);
   return parseJsonOrThrow<ReportResponse>(res);
 }
 
 export async function transcribeAudio(blob: Blob): Promise<string> {
   const form = new FormData();
   form.append("audio", blob, "audio.webm");
-  const res = await fetch(`${API_URL}/transcribe`, {
+  const res = await fetchWithKey(`${API_URL}/transcribe`, {
     method: "POST",
     body: form,
   });
@@ -80,9 +94,8 @@ export async function transcribeAudio(blob: Blob): Promise<string> {
 }
 
 export async function fetchSpeech(text: string): Promise<Blob> {
-  const res = await fetch(`${API_URL}/speak`, {
+  const res = await fetchWithKey(`${API_URL}/speak`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
   });
   if (!res.ok) {
