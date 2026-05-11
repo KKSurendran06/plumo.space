@@ -4,7 +4,7 @@ AI-powered interview simulator. Pick a role, answer 8 adaptive questions by voic
 
 Built for Group 14, Amrita Vishwa Vidyapeetham.
 
-> Stack: Python + Flask backend on Cloud Run, Next.js 14 (App Router) + TypeScript + Tailwind frontend on Vercel, Vertex AI Gemini 1.5 Pro for the interview engine, Cloud Speech-to-Text + Text-to-Speech for voice, Firestore for session state.
+> Stack: Python + Flask backend on Cloud Run, Next.js 14 (App Router) + TypeScript + Tailwind frontend on Vercel, Vertex AI Gemini 2.5 Pro for the interview engine, Cloud Speech-to-Text + Text-to-Speech for voice, Firestore for session state.
 
 > SDG alignment: SDG 4 (Quality Education) — democratizes interview coaching. SDG 8 (Decent Work) — closes employability skill gaps directly.
 
@@ -102,9 +102,6 @@ Set at least:
 
 ```
 plumo/
-├── CLAUDE.md             ← project brief / source of truth
-├── DECISIONS.md          ← architectural decisions made during build
-├── PROGRESS.md           ← build progress + manual setup checklist
 ├── README.md             ← you are here
 ├── .env.example          ← copy to .env and fill in
 ├── backend/
@@ -116,6 +113,11 @@ plumo/
 └── frontend/
     ├── app/
     │   ├── page.tsx                          ← landing / role selector
+    │   ├── layout.tsx                        ← root layout
+    │   ├── globals.css                       ← global styles
+    │   ├── favicon.ico
+    │   ├── _components/
+    │   │   └── BackgroundFX.tsx              ← animated background
     │   ├── interview/[sessionId]/page.tsx    ← interview UI
     │   └── report/[sessionId]/page.tsx       ← report + radar chart
     ├── lib/
@@ -139,7 +141,7 @@ plumo/
 | POST   | `/transcribe`                  | Multipart audio → transcript (Speech-to-Text)                    |
 | POST   | `/speak`                       | `{ text }` → MP3 audio (Text-to-Speech)                          |
 
-Full request/response schemas are in `CLAUDE.md`.
+See the API reference above or check the backend route handlers in `backend/main.py` for the exact schemas.
 
 ---
 
@@ -179,4 +181,4 @@ Set `VERCEL_URL` on the backend (Cloud Run) to your Vercel domain so CORS allows
 - **Session not found** — 404; frontend redirects to homepage with `?error=session_expired`.
 - **Session inactive >20 min** — marked expired; 410 on next answer.
 
-See `CLAUDE.md` for full details.
+The backend handles all failures gracefully — the frontend never shows an error screen, just degrades to text-only mode or shows a retry prompt.
