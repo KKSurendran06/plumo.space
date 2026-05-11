@@ -539,11 +539,10 @@ export default function HomePage() {
                 <div className="text-sm text-[#8b8b9e]">Takes 15 minutes. No fluff. Pure signal.</div>
               </div>
               <motion.button
-                onClick={scrollToFeatures}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
                 className="shrink-0 px-7 py-3 rounded-full bg-white/[0.06] border border-white/10 text-white text-sm font-medium hover:bg-white/[0.1] hover:border-[#6366f1]/40 transition-all"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               >
                 Back to top ↑
               </motion.button>
