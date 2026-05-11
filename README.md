@@ -167,7 +167,8 @@ cd frontend
 vercel --prod
 ```
 
-Set `NEXT_PUBLIC_API_URL` in the Vercel project settings to your Cloud Run URL.
+Set `NEXT_PUBLIC_API_URL` to your Cloud Run URL.
+Set `NEXT_PUBLIC_API_KEY` to the secret key you generated.
 Set `VERCEL_URL` on the backend (Cloud Run) to your Vercel domain so CORS allows it.
 
 ---
